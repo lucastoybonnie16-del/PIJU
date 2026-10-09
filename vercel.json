@@ -1,0 +1,8 @@
+{
+  "outputDirectory": "site",
+  "cleanUrls": true,
+  "rewrites": [
+    { "source": "/site", "destination": "/" },
+    { "source": "/site/(.*)", "destination": "/$1" }
+  ]
+}
