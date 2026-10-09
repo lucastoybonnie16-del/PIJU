@@ -47,12 +47,12 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
 </head>
-<body class="bg-obsidian text-gray-200 font-sans antialiased overflow-hidden h-screen flex flex-col md:flex-row relative">
+<body class="bg-obsidian text-gray-200 font-sans antialiased overflow-hidden h-screen flex relative">
 
     <!-- MOBILE SIDEBAR BACKDROP OVERLAY -->
-    <div id="sidebar-backdrop" onclick="app.closeMobileSidebar()" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-40 hidden md:hidden transition-opacity"></div>
+    <div id="sidebar-backdrop" onclick="app.closeMobileSidebar()" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-40 hidden transition-opacity"></div>
 
-    <!-- MOBILE TOPBAR HEADER -->
+    <!-- MOBILE TOPBAR HEADER (Visível APENAS no celular via CSS) -->
     <header id="mobile-topbar" class="hidden items-center justify-between bg-obsidianDark border-b border-gray-800 px-3.5 py-2.5 z-30 shrink-0 select-none">
         <div class="flex items-center gap-2.5">
             <button onclick="app.toggleMobileSidebar()" class="w-8 h-8 rounded-lg bg-gray-800/80 border border-gray-700/60 flex items-center justify-center text-gray-200 hover:text-white active:scale-95 transition" title="Abrir Menu">
@@ -109,8 +109,8 @@
         </div>
     </div>
 
-    <!-- SIDEBAR (Drawer on Mobile, Sidebar on Desktop) -->
-    <nav id="sidebar" class="fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] bg-obsidianDark border-r border-gray-800 flex flex-col hidden h-full select-none transform -translate-x-full md:translate-x-0 md:relative md:flex transition-transform duration-300 ease-in-out shadow-2xl">
+    <!-- SIDEBAR (Barra Lateral Desktop / Drawer no Celular) -->
+    <nav id="sidebar" class="w-72 bg-obsidianDark border-r border-gray-800 flex flex-col hidden h-full select-none shrink-0">
         <div class="p-4 border-b border-gray-800 flex items-center justify-between">
             <div class="flex items-center gap-2.5">
                 <div class="w-8 h-8 rounded-lg bg-amber-500/20 text-pijuAccent flex items-center justify-center font-bold">

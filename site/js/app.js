@@ -267,18 +267,16 @@ window.app = {
         document.getElementById('main-content').classList.remove('hidden');
         document.getElementById('current-user-display').textContent = `${this.state.user} (${this.getRoleLabel(this.state.role)})`;
         
-        // Exibe controles mobile se estiver em smartphone/Android
+        // Exibe controles mobile se estiver em smartphone/Android (gerenciado via CSS)
         const mobileTopbar = document.getElementById('mobile-topbar');
         const mobileBottomNav = document.getElementById('mobile-bottom-nav');
         if (mobileTopbar) {
             mobileTopbar.classList.remove('hidden');
-            mobileTopbar.classList.add('flex');
             const badge = document.getElementById('mobile-current-role-badge');
             if (badge) badge.textContent = this.getRoleLabel(this.state.role).toUpperCase();
         }
         if (mobileBottomNav) {
             mobileBottomNav.classList.remove('hidden');
-            mobileBottomNav.classList.add('flex');
             this.updateMobileStationButton();
         }
 
@@ -458,14 +456,12 @@ window.app = {
         const sidebar = document.getElementById('sidebar');
         const backdrop = document.getElementById('sidebar-backdrop');
         if (!sidebar) return;
-        const isClosed = sidebar.classList.contains('-translate-x-full');
-        if (isClosed) {
-            sidebar.classList.remove('-translate-x-full');
-            sidebar.classList.add('translate-x-0');
+        const isOpen = sidebar.classList.contains('mobile-open');
+        if (!isOpen) {
+            sidebar.classList.add('mobile-open');
             if (backdrop) backdrop.classList.remove('hidden');
         } else {
-            sidebar.classList.add('-translate-x-full');
-            sidebar.classList.remove('translate-x-0');
+            sidebar.classList.remove('mobile-open');
             if (backdrop) backdrop.classList.add('hidden');
         }
     },
@@ -474,8 +470,7 @@ window.app = {
         const sidebar = document.getElementById('sidebar');
         const backdrop = document.getElementById('sidebar-backdrop');
         if (sidebar) {
-            sidebar.classList.add('-translate-x-full');
-            sidebar.classList.remove('translate-x-0');
+            sidebar.classList.remove('mobile-open');
         }
         if (backdrop) backdrop.classList.add('hidden');
     },

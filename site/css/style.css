@@ -73,16 +73,68 @@ button, select, input, a {
     color: #f59e0b !important;
 }
 
-/* Mobile smooth drawer transition */
-#sidebar {
-    transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+/* ========================================================
+   DESKTOP (min-width: 768px): STRICT DESKTOP ISOLATION
+   ======================================================== */
+@media (min-width: 768px) {
+    #mobile-topbar,
+    #mobile-bottom-nav,
+    #sidebar-backdrop {
+        display: none !important;
+    }
+
+    body {
+        flex-direction: row !important;
+    }
+
+    #sidebar {
+        position: relative !important;
+        transform: none !important;
+        width: 18rem !important; /* 288px (w-72) */
+        max-width: 18rem !important;
+        height: 100% !important;
+        box-shadow: none !important;
+        flex-shrink: 0 !important;
+    }
 }
 
-/* Mobile adjustments for Pijuzinho on small screens */
-@media (max-width: 640px) {
+/* ========================================================
+   MOBILE (max-width: 767px): MOBILE APPS LAYOUT
+   ======================================================== */
+@media (max-width: 767px) {
+    body {
+        flex-direction: column !important;
+    }
+
+    #mobile-topbar:not(.hidden) {
+        display: flex !important;
+    }
+
+    #mobile-bottom-nav:not(.hidden) {
+        display: flex !important;
+    }
+
+    #sidebar {
+        position: fixed !important;
+        top: 0 !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        z-index: 50 !important;
+        width: 18rem !important;
+        max-width: 85vw !important;
+        transform: translateX(-100%);
+        transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8) !important;
+    }
+
+    #sidebar.mobile-open {
+        transform: translateX(0) !important;
+    }
+
     #pijuzinho-pet-container {
         transform: scale(0.88);
         transform-origin: bottom right;
     }
 }
+
 
