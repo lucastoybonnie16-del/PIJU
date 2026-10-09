@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Piju OS - Segundo Cérebro Piracanjuba</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        obsidian: '#141414',
+                        obsidianDark: '#0e0e0e',
+                        obsidianLight: '#1f1f1f',
+                        obsidianCard: '#242424',
+                        pijuAccent: '#f59e0b',
+                        pijuGold: '#eab308',
+                        pijuBlue: '#38bdf8',
+                        pijuPurple: '#c084fc',
+                        pijuGreen: '#4ade80',
+                        pijuRed: '#f87171'
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Three.js & GLTFLoader for Pijuzinho 3D Pet Companion -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <!-- Force Graph (Vanilla JS) -->
+    <script src="https://unpkg.com/force-graph"></script>
+    <!-- Chart.js for Gestor BI Dashboard -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-obsidian text-gray-200 font-sans antialiased overflow-hidden h-screen flex">
+
+    <!-- LOGIN SCREEN -->
+    <div id="login-screen" class="absolute inset-0 z-50 flex items-center justify-center bg-obsidianDark transition-opacity duration-300">
+        <div class="bg-obsidianLight p-8 rounded-2xl shadow-2xl w-full max-w-md border border-gray-800">
+            <div class="text-center mb-6">
+                <div class="inline-flex p-3 rounded-2xl bg-amber-500/10 text-pijuAccent text-3xl mb-3">
+                    <i class="fa-solid fa-cow"></i>
+                </div>
+                <h1 class="text-2xl font-bold text-white tracking-wide">PIJU OS • PIRACANJUBA</h1>
+                <p class="text-xs text-gray-400 mt-1">Rastreabilidade Imutável • 2M Litros / Dia</p>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Perfil / Setor Operacional</label>
+                    <select id="login-role" class="w-full bg-obsidian border border-gray-700 rounded-lg px-3 py-2.5 text-white focus:outline-none focus:border-pijuAccent transition text-sm">
+                        <option value="gestor">👑 Gestor Geral (Painel BI & Controle Total)</option>
+                        <option value="portaria">🚚 1. Portaria & Recepção de Cargas</option>
+                        <option value="balanca">⚖️ 2. Balança & Pesagem Oficial</option>
+                        <option value="laboratorio">🧪 3. Laboratório de Qualidade (IA Piju)</option>
+                        <option value="producao">⚙️ 4. Produção, UHT & Envase</option>
+                        <option value="expedicao">📦 5. Expedição & Saída de Veículos</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Matrícula SAP / Operador</label>
+                    <input type="text" id="login-user" class="w-full bg-obsidian border border-gray-700 rounded-lg px-3 py-2.5 text-white focus:outline-none focus:border-pijuAccent transition text-sm" value="GESTOR-PIRACANJUBA">
+                </div>
+                <button onclick="app.login()" class="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-obsidianDark font-bold py-3 px-4 rounded-lg transition shadow-lg mt-4 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-right-to-bracket"></i> Acessar Sistema
+                </button>
+            </div>
+            <div class="mt-6 text-center text-[11px] text-gray-500">
+                PIRACANJUBA • Grand Prix SENAI de Inovação
+            </div>
+        </div>
+    </div>
+
+    <!-- SIDEBAR (Obsidian Style) -->
+    <nav id="sidebar" class="w-72 bg-obsidianDark border-r border-gray-800 flex flex-col hidden h-full select-none">
+        <div class="p-4 border-b border-gray-800 flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-lg bg-amber-500/20 text-pijuAccent flex items-center justify-center font-bold">
+                    <i class="fa-solid fa-cow"></i>
+                </div>
+                <div>
+                    <div class="font-bold text-white text-sm tracking-wide leading-none">PIJU OS</div>
+                    <div class="text-[10px] text-gray-400 leading-none mt-1">Second Brain • Rastreio</div>
+                </div>
+            </div>
+            <span class="px-2 py-0.5 rounded text-[10px] bg-gray-800 text-emerald-400 font-mono">ONLINE</span>
+        </div>
+        
+        <div class="p-2 flex-1 overflow-y-auto custom-scrollbar flex flex-col">
+            <!-- Navigation Links -->
+            <div class="mb-4 space-y-1" id="nav-links-container">
+                <!-- Dynamically injected based on role -->
+            </div>
+
+            <!-- Obsidian Folders Title -->
+            <div class="flex items-center justify-between px-2 pt-2 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider border-t border-gray-800">
+                <span><i class="fa-solid fa-network-wired text-pijuAccent mr-1"></i> Rastreabilidade</span>
+                <span id="folder-count-badge" class="text-[10px] text-gray-500 font-mono">0 itens</span>
+            </div>
+            
+            <!-- Obsidian Tree Files -->
+            <div class="space-y-1 mt-1 flex-1" id="dynamic-folders">
+                <!-- Injected via JS -->
+            </div>
+        </div>
+
+        <div class="p-3 border-t border-gray-800 text-xs text-gray-400 flex justify-between items-center bg-obsidian">
+            <div class="truncate">
+                <i class="fa-solid fa-user-circle mr-1 text-gray-400"></i>
+                <span class="text-white font-medium" id="current-user-display"></span>
+            </div>
+            <button onclick="app.logout()" class="hover:text-red-400 text-gray-400 transition p-1" title="Sair do Sistema">
+                <i class="fa-solid fa-right-from-bracket"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- MAIN CONTENT AREA -->
+    <main id="main-content" class="flex-1 flex flex-col relative hidden bg-obsidian overflow-hidden">
+        
+        <!-- HOME / GESTOR SCREEN -->
+        <div id="view-home" class="view-panel h-full overflow-y-auto p-8 hidden">
+            <div class="flex flex-col md:flex-row md:items-center justify-between pb-6 mb-6 border-b border-gray-800 gap-4">
+                <div>
+                    <h2 class="text-3xl font-bold text-white flex items-center gap-3">
+                        <span>Painel Executivo Piracanjuba</span>
+                        <span class="text-xs px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-300 font-normal">Teto: 2.000.000 L / Dia</span>
+                    </h2>
+                    <p class="text-xs text-gray-400 mt-1">Gestão inteligente de turnos (24h), tempos médios de processo e rastreabilidade total.</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button onclick="app.navigate('second-brain')" class="bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-obsidianDark font-bold py-2.5 px-4 rounded-lg transition shadow-lg flex items-center gap-2 text-xs">
+                        <i class="fa-solid fa-network-wired"></i> Segundo Cérebro (Grafo)
+                    </button>
+                    <!-- RESET BUTTON ONLY FOR GESTOR -->
+                    <button id="btn-reset-db" onclick="app.clearData()" class="hidden bg-red-900/30 border border-red-700/50 hover:bg-red-900/60 text-red-400 font-bold py-2.5 px-4 rounded-lg transition text-xs flex items-center gap-2">
+                        <i class="fa-solid fa-trash-can"></i> Resetar Banco
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Cards Grid for Each Profession -->
+            <div id="home-cards-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+                <!-- 1. Portaria Card -->
+                <div class="bg-obsidianCard rounded-xl overflow-hidden border border-gray-800 hover:border-gray-600 transition-all shadow-xl cursor-pointer group flex flex-col" onclick="app.navigate('portaria')" id="card-portaria">
+                    <div class="h-36 relative overflow-hidden">
+                        <img src="assets/portaria_banner.jpg" alt="Portaria" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                        <div class="absolute inset-0 bg-gradient-to-t from-obsidianCard via-transparent to-transparent"></div>
+                        <span class="absolute top-2 left-2 bg-blue-500/80 backdrop-blur text-white text-[10px] px-2 py-0.5 rounded font-bold">1. RECEPÇÃO</span>
+                    </div>
+                    <div class="p-3.5 flex-1 flex flex-col justify-between">
+                        <div>
+                            <h3 class="text-sm font-bold text-white mb-1 flex items-center gap-1.5">
+                                <i class="fa-solid fa-truck text-blue-400"></i> Portaria
+                            </h3>
+                            <p class="text-[11px] text-gray-400 line-clamp-2">Câmera OCR, rota do caminhão e motorista.</p>
+                        </div>
+                        <div class="mt-3 pt-2 border-t border-gray-800 flex justify-between items-center text-[10px] text-blue-400">
+                            <span>Acessar</span> <i class="fa-solid fa-arrow-right"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Balança Card -->
+                <div class="bg-obsidianCard rounded-xl overflow-hidden border border-gray-800 hover:border-gray-600 transition-all shadow-xl cursor-pointer group flex flex-col" onclick="app.navigate('balanca')" id="card-balanca">
+                    <div class="h-36 relative overflow-hidden">
+                        <img src="assets/balanca_pesagem.jpg" alt="Balança" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                        <div class="absolute inset-0 bg-gradient-to-t from-obsidianCard via-transparent to-transparent"></div>
+                        <span class="absolute top-2 left-2 bg-emerald-500/80 backdrop-blur text-white text-[10px] px-2 py-0.5 rounded font-bold">2. PESAGEM</span>
+                    </div>
+                    <div class="p-3.5 flex-1 flex flex-col justify-between">
+                        <div>
+                            <h3 class="text-sm font-bold text-white mb-1 flex items-center gap-1.5">
+                                <i class="fa-solid fa-scale-balanced text-emerald-400"></i> Balança
+                            </h3>
+                            <p class="text-[11px] text-gray-400 line-clamp-2">Pesagem bruta, tara e volume calibrado.</p>
+                        </div>
+                        <div class="mt-3 pt-2 border-t border-gray-800 flex justify-between items-center text-[10px] text-emerald-400">
+                            <span>Acessar</span> <i class="fa-solid fa-arrow-right"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Laboratório Card -->
+                <div class="bg-obsidianCard rounded-xl overflow-hidden border border-gray-800 hover:border-gray-600 transition-all shadow-xl cursor-pointer group flex flex-col" onclick="app.navigate('laboratorio')" id="card-laboratorio">
+                    <div class="h-36 relative overflow-hidden">
+                        <img src="assets/lab_banner.jpg" alt="Laboratório" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                        <div class="absolute inset-0 bg-gradient-to-t from-obsidianCard via-transparent to-transparent"></div>
+                        <span class="absolute top-2 left-2 bg-amber-500/80 backdrop-blur text-obsidianDark text-[10px] px-2 py-0.5 rounded font-bold">3. QUALIDADE</span>
+                    </div>
+                    <div class="p-3.5 flex-1 flex flex-col justify-between">
+                        <div>
+                            <h3 class="text-sm font-bold text-white mb-1 flex items-center gap-1.5">
+                                <i class="fa-solid fa-flask text-pijuAccent"></i> Laboratório IA
+                            </h3>
+                            <p class="text-[11px] text-gray-400 line-clamp-2">Físico-química, alizarol e aprovação IA.</p>
+                        </div>
+                        <div class="mt-3 pt-2 border-t border-gray-800 flex justify-between items-center text-[10px] text-amber-400">
+                            <span>Acessar</span> <i class="fa-solid fa-arrow-right"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. Produção Card -->
+                <div class="bg-obsidianCard rounded-xl overflow-hidden border border-gray-800 hover:border-gray-600 transition-all shadow-xl cursor-pointer group flex flex-col" onclick="app.navigate('producao')" id="card-producao">
+                    <div class="h-36 relative overflow-hidden">
+                        <img src="assets/producao_banner.jpg" alt="Produção" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                        <div class="absolute inset-0 bg-gradient-to-t from-obsidianCard via-transparent to-transparent"></div>
+                        <span class="absolute top-2 left-2 bg-purple-500/80 backdrop-blur text-white text-[10px] px-2 py-0.5 rounded font-bold">4. PRODUÇÃO</span>
+                    </div>
+                    <div class="p-3.5 flex-1 flex flex-col justify-between">
+                        <div>
+                            <h3 class="text-sm font-bold text-white mb-1 flex items-center gap-1.5">
+                                <i class="fa-solid fa-gears text-purple-400"></i> UHT & Envase
+                            </h3>
+                            <p class="text-[11px] text-gray-400 line-clamp-2">Silos, pasteurização, UHT e máquinas assépticas.</p>
+                        </div>
+                        <div class="mt-3 pt-2 border-t border-gray-800 flex justify-between items-center text-[10px] text-purple-400">
+                            <span>Acessar</span> <i class="fa-solid fa-arrow-right"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5. Expedição Card -->
+                <div class="bg-obsidianCard rounded-xl overflow-hidden border border-gray-800 hover:border-gray-600 transition-all shadow-xl cursor-pointer group flex flex-col" onclick="app.navigate('expedicao')" id="card-expedicao">
+                    <div class="h-36 relative overflow-hidden">
+                        <img src="assets/expedicao_banner.jpg" alt="Expedição" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                        <div class="absolute inset-0 bg-gradient-to-t from-obsidianCard via-transparent to-transparent"></div>
+                        <span class="absolute top-2 left-2 bg-sky-500/80 backdrop-blur text-white text-[10px] px-2 py-0.5 rounded font-bold">5. EXPEDIÇÃO</span>
+                    </div>
+                    <div class="p-3.5 flex-1 flex flex-col justify-between">
+                        <div>
+                            <h3 class="text-sm font-bold text-white mb-1 flex items-center gap-1.5">
+                                <i class="fa-solid fa-dolly text-sky-400"></i> Expedição
+                            </h3>
+                            <p class="text-[11px] text-gray-400 line-clamp-2">Câmera de saída, lacre e bloqueio final da carga.</p>
+                        </div>
+                        <div class="mt-3 pt-2 border-t border-gray-800 flex justify-between items-center text-[10px] text-sky-400">
+                            <span>Acessar</span> <i class="fa-solid fa-arrow-right"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CONTAINER EXCLUSIVO DO GESTOR (BI, GRÁFICOS, TURNOS E AUDITORIA) -->
+            <div id="gestor-bi-container">
+                <!-- PAINEL DE INDICADORES PRINCIPAIS DO LEITE -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                <div class="bg-obsidianCard p-4 rounded-xl border border-gray-800">
+                    <div class="text-[11px] text-gray-400 uppercase tracking-wider font-semibold">Volume Total Recebido</div>
+                    <div class="text-2xl font-black text-white font-mono mt-1" id="stat-vol-recebido">0 L</div>
+                    <div class="text-[10px] text-gray-500 mt-1">Capacidade máx: 2M L/dia</div>
+                </div>
+                <div class="bg-obsidianCard p-4 rounded-xl border border-emerald-900/40">
+                    <div class="text-[11px] text-emerald-400 uppercase tracking-wider font-semibold">Leite Aprovado (UHT)</div>
+                    <div class="text-2xl font-black text-emerald-400 font-mono mt-1" id="stat-vol-aprovado">0 L</div>
+                    <div class="text-[10px] text-emerald-500/80 mt-1">Conformidade MAPA</div>
+                </div>
+                <div class="bg-obsidianCard p-4 rounded-xl border border-red-900/40">
+                    <div class="text-[11px] text-red-400 uppercase tracking-wider font-semibold">Leite Recusado (Descarte)</div>
+                    <div class="text-2xl font-black text-red-400 font-mono mt-1" id="stat-vol-recusado">0 L</div>
+                    <div class="text-[10px] text-red-400/80 mt-1">Neutralização ETE</div>
+                </div>
+                <div class="bg-obsidianCard p-4 rounded-xl border border-sky-900/40">
+                    <div class="text-[11px] text-sky-400 uppercase tracking-wider font-semibold">Leite Expedido / Caixinha</div>
+                    <div class="text-2xl font-black text-sky-400 font-mono mt-1" id="stat-vol-expedido">0 L</div>
+                    <div class="text-[10px] text-sky-400/80 mt-1">Cargas lacradas</div>
+                </div>
+            </div>
+
+            <!-- SEÇÃO DE GRÁFICOS DO GESTOR (BI DASHBOARD) -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                <!-- Gráfico 1: Média de tempo por turno -->
+                <div class="bg-obsidianCard p-5 rounded-xl border border-gray-800 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                                <i class="fa-solid fa-clock text-amber-400"></i> Tempo Médio do Caminhão por Turno
+                            </h3>
+                            <span class="text-[10px] text-gray-500 font-mono">Minutos</span>
+                        </div>
+                        <p class="text-[11px] text-gray-400 mb-4">Média de permanência total (Entrada até Saída de fábrica).</p>
+                    </div>
+                    <div class="h-56 relative">
+                        <canvas id="chart-tempo-turno"></canvas>
+                    </div>
+                </div>
+
+                <!-- Gráfico 2: Média de tempo por categoria -->
+                <div class="bg-obsidianCard p-5 rounded-xl border border-gray-800 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                                <i class="fa-solid fa-stopwatch text-sky-400"></i> Tempo Médio por Categoria Operacional
+                            </h3>
+                            <span class="text-[10px] text-gray-500 font-mono">Minutos</span>
+                        </div>
+                        <p class="text-[11px] text-gray-400 mb-4">Gargalo identificado no Laboratório (área crítica de análise).</p>
+                    </div>
+                    <div class="h-56 relative">
+                        <canvas id="chart-tempo-categoria"></canvas>
+                    </div>
+                </div>
+
+                <!-- Gráfico 3: Balanço de Massa do Leite -->
+                <div class="bg-obsidianCard p-5 rounded-xl border border-gray-800 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                                <i class="fa-solid fa-chart-pie text-emerald-400"></i> Balanço de Qualidade do Leite
+                            </h3>
+                            <span class="text-[10px] text-gray-500 font-mono">Volume</span>
+                        </div>
+                        <p class="text-[11px] text-gray-400 mb-4">Taxa de aprovação, retenção e expedição de caixinhas.</p>
+                    </div>
+                    <div class="h-56 relative flex items-center justify-center">
+                        <canvas id="chart-balanco-leite"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SEÇÃO DE RELATÓRIOS DOS 3 TURNOS (A CADA 8 HORAS) -->
+            <div class="mb-8">
+                <h3 class="text-sm font-bold text-white uppercase tracking-wider mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-business-time text-pijuAccent"></i> Relatórios de Produtividade dos Turnos (Ciclos de 8 Horas)
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <!-- Turno 1 -->
+                    <div class="bg-obsidianCard p-5 rounded-xl border border-gray-800 border-l-4 border-l-amber-500">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-xs font-bold text-white">Turno 1 • Manhã</span>
+                            <span class="text-[10px] px-2 py-0.5 rounded bg-gray-800 text-gray-300 font-mono">06:00 - 14:00</span>
+                        </div>
+                        <div class="space-y-1.5 text-xs text-gray-300 mt-3 font-mono">
+                            <div class="flex justify-between"><span>Volume Recebido:</span> <strong class="text-white" id="turno1-vol">0 L</strong></div>
+                            <div class="flex justify-between"><span>Caminhões Atendidos:</span> <strong class="text-white" id="turno1-cam">0 bitrens</strong></div>
+                            <div class="flex justify-between"><span>Tempo Médio / Veículo:</span> <strong class="text-amber-400" id="turno1-tempo">0 min</strong></div>
+                            <div class="flex justify-between"><span>Laudos Aprovados:</span> <strong class="text-emerald-400" id="turno1-laudos">0 (0%)</strong></div>
+                            <div class="flex justify-between"><span>Cargas Rejeitadas:</span> <strong class="text-red-400" id="turno1-rej">0 caminhões</strong></div>
+                        </div>
+                        <div class="mt-4 pt-3 border-t border-gray-800 text-[11px] text-gray-400" id="turno1-status">
+                            <i class="fa-solid fa-clock text-gray-500 mr-1"></i> Aguardando recebimento de leite no turno.
+                        </div>
+                    </div>
+
+                    <!-- Turno 2 -->
+                    <div class="bg-obsidianCard p-5 rounded-xl border border-gray-800 border-l-4 border-l-blue-500">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-xs font-bold text-white">Turno 2 • Tarde</span>
+                            <span class="text-[10px] px-2 py-0.5 rounded bg-gray-800 text-gray-300 font-mono">14:00 - 22:00</span>
+                        </div>
+                        <div class="space-y-1.5 text-xs text-gray-300 mt-3 font-mono">
+                            <div class="flex justify-between"><span>Volume Recebido:</span> <strong class="text-white" id="turno2-vol">0 L</strong></div>
+                            <div class="flex justify-between"><span>Caminhões Atendidos:</span> <strong class="text-white" id="turno2-cam">0 bitrens</strong></div>
+                            <div class="flex justify-between"><span>Tempo Médio / Veículo:</span> <strong class="text-blue-400" id="turno2-tempo">0 min</strong></div>
+                            <div class="flex justify-between"><span>Laudos Aprovados:</span> <strong class="text-emerald-400" id="turno2-laudos">0 (0%)</strong></div>
+                            <div class="flex justify-between"><span>Cargas Rejeitadas:</span> <strong class="text-red-400" id="turno2-rej">0 caminhões</strong></div>
+                        </div>
+                        <div class="mt-4 pt-3 border-t border-gray-800 text-[11px] text-gray-400" id="turno2-status">
+                            <i class="fa-solid fa-clock text-gray-500 mr-1"></i> Aguardando recebimento de leite no turno.
+                        </div>
+                    </div>
+
+                    <!-- Turno 3 -->
+                    <div class="bg-obsidianCard p-5 rounded-xl border border-gray-800 border-l-4 border-l-purple-500">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-xs font-bold text-white">Turno 3 • Noite</span>
+                            <span class="text-[10px] px-2 py-0.5 rounded bg-gray-800 text-gray-300 font-mono">22:00 - 06:00</span>
+                        </div>
+                        <div class="space-y-1.5 text-xs text-gray-300 mt-3 font-mono">
+                            <div class="flex justify-between"><span>Volume Recebido:</span> <strong class="text-white" id="turno3-vol">0 L</strong></div>
+                            <div class="flex justify-between"><span>Caminhões Atendidos:</span> <strong class="text-white" id="turno3-cam">0 bitrens</strong></div>
+                            <div class="flex justify-between"><span>Tempo Médio / Veículo:</span> <strong class="text-purple-400" id="turno3-tempo">0 min</strong></div>
+                            <div class="flex justify-between"><span>Laudos Aprovados:</span> <strong class="text-emerald-400" id="turno3-laudos">0 (0%)</strong></div>
+                            <div class="flex justify-between"><span>Cargas Rejeitadas:</span> <strong class="text-emerald-400" id="turno3-rej">0 caminhões</strong></div>
+                        </div>
+                        <div class="mt-4 pt-3 border-t border-gray-800 text-[11px] text-gray-400" id="turno3-status">
+                            <i class="fa-solid fa-clock text-gray-500 mr-1"></i> Aguardando recebimento de leite no turno.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SEÇÃO DE CARGAS RECUSADAS & AUDITORIA DE DESCARTE -->
+            <div class="bg-obsidianCard p-6 rounded-xl border border-red-950/60 mb-8">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-sm font-bold text-red-400 uppercase tracking-wider flex items-center gap-2">
+                        <i class="fa-solid fa-ban text-red-500"></i> Relatório de Cargas Recusadas (Auditoria Legal & Sanitária)
+                    </h3>
+                    <span class="text-[11px] px-2.5 py-0.5 rounded-full bg-red-500/10 text-red-300 font-mono border border-red-500/20">
+                        Inalterável • Conformidade MAPA
+                    </span>
+                </div>
+                <p class="text-xs text-gray-400 mb-4">
+                    Cargas reprovadas pelo Laboratório IA por desvio de acidez, teste de alizarol ou crioscopia. Registro obrigatório com destinação de efluente.
+                </p>
+                
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs font-mono">
+                        <thead class="bg-obsidian text-gray-400 uppercase text-[10px] border-b border-gray-800">
+                            <tr>
+                                <th class="p-3">Data / Hora</th>
+                                <th class="p-3">Placa</th>
+                                <th class="p-3">Motorista</th>
+                                <th class="p-3">Volume Rejeitado</th>
+                                <th class="p-3">Motivo da Recusa (Laudo IA)</th>
+                                <th class="p-3">Destinação Legal do Efluente</th>
+                                <th class="p-3">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-800 text-gray-300" id="table-rejected-trucks">
+                            <!-- Dynamic Rows Injected via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- MONITORAMENTO AO VIVO DE TODAS AS PLACAS -->
+            <div class="bg-obsidianCard p-6 rounded-xl border border-gray-800 mb-4">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                        <i class="fa-solid fa-list-check text-blue-400"></i> Rastreamento ao Vivo de Placas de Caminhões
+                    </h3>
+                    <button onclick="app.updateLivePlacasTable()" class="text-xs text-gray-400 hover:text-white flex items-center gap-1.5">
+                        <i class="fa-solid fa-rotate-right"></i> Atualizar
+                    </button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-obsidian text-gray-400 uppercase text-[10px] font-mono border-b border-gray-800">
+                            <tr>
+                                <th class="p-3">Placa Veículo</th>
+                                <th class="p-3">Motorista Responsável</th>
+                                <th class="p-3">Fazenda Origem</th>
+                                <th class="p-3">Volume</th>
+                                <th class="p-3">Etapa Atual no Processo</th>
+                                <th class="p-3">Bloqueio / Saída</th>
+                                <th class="p-3 text-right">Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-800 text-gray-300" id="table-live-trucks">
+                            <!-- Injected via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            </div> <!-- /gestor-bi-container -->
+        </div>
+
+        <!-- 1. PORTARIA SCREEN -->
+        <div id="view-portaria" class="view-panel h-full overflow-y-auto p-8 hidden">
+            <div class="flex items-center justify-between pb-4 mb-6 border-b border-gray-800">
+                <div>
+                    <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-truck text-blue-400"></i> 1. Recepção & Portaria Inteligente
+                    </h2>
+                    <p class="text-xs text-gray-400 mt-1">Monitoramento por IA de câmera OCR, rota do veículo e identificação biométrica do motorista.</p>
+                </div>
+                <button onclick="app.simulateCamera()" class="bg-gray-800 hover:bg-gray-700 text-white text-xs px-4 py-2.5 rounded-lg border border-gray-700 transition flex items-center gap-2">
+                    <i class="fa-solid fa-arrows-rotate"></i> Escanear Próximo Caminhão
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-6xl">
+                <!-- Coluna 1 & 2: Dados do Caminhão e Rota -->
+                <div class="lg:col-span-2 space-y-6">
+                    <!-- Sensor Câmera OCR -->
+                    <div class="bg-obsidianCard p-6 rounded-xl border border-gray-800">
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="text-xs font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Câmera OCR Entrada 01
+                            </span>
+                            <div class="flex items-center gap-3">
+                                <span class="text-xs px-2.5 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-300 font-mono flex items-center gap-1.5">
+                                    <i class="fa-solid fa-stopwatch text-amber-400"></i> Espera na Recepção: <strong id="timer-portaria-live" class="text-amber-300">00:00</strong>
+                                </span>
+                                <span class="text-xs text-gray-400 font-mono" id="camera-time"></span>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-6 bg-obsidian p-4 rounded-lg border border-gray-700/60">
+                            <div class="text-4xl text-blue-400 px-2"><i class="fa-solid fa-camera"></i></div>
+                            <div class="flex-1">
+                                <div class="text-xs text-gray-400">Placa Reconhecida:</div>
+                                <div class="text-3xl font-black text-white tracking-widest font-mono" id="camera-placa">ABC-1234</div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-xs text-gray-400">Tipo de Veículo:</div>
+                                <div class="text-sm font-bold text-gray-200">Bitrem Tanque Inox 304</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Rota Rastreável do Caminhão -->
+                    <div class="bg-obsidianCard p-6 rounded-xl border border-gray-800">
+                        <h3 class="text-sm font-bold text-white uppercase tracking-wider mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-route text-blue-400"></i> Rota & Telemetria do Veículo
+                        </h3>
+                        <div class="space-y-3 text-sm" id="port-rota-details">
+                            <!-- Injected via JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Coluna 3: Foto do Motorista e Ação -->
+                <div class="space-y-6">
+                    <div class="bg-obsidianCard p-6 rounded-xl border border-gray-800 text-center">
+                        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Motorista Identificado</h3>
+                        <div class="w-36 h-36 mx-auto rounded-full overflow-hidden border-2 border-pijuAccent shadow-lg mb-4 bg-gray-800">
+                            <img id="driver-photo" src="assets/motorista_jobesvaldo.jpg" alt="Motorista" class="w-full h-full object-cover">
+                        </div>
+                        <div class="text-lg font-bold text-white" id="driver-name">Jobesvaldo Pinto</div>
+                        <div class="text-xs text-gray-400 mt-1" id="driver-info">CNH: E • Válida • Piracanjuba Frota Oficial</div>
+                        <div class="mt-3 inline-block px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-semibold">
+                            <i class="fa-solid fa-check"></i> Credencial Liberada
+                        </div>
+                    </div>
+
+                    <button onclick="app.registerTruck()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3.5 px-4 rounded-xl transition shadow-lg flex items-center justify-center gap-2 text-sm">
+                        <i class="fa-solid fa-clipboard-check"></i> Autorizar Entrada e Enviar à Balança
+                    </button>
+                    <p class="text-[11px] text-gray-500 text-center">
+                        O porteiro registra a chegada. A pesagem exata é aferida na Balança Rodoviária a seguir.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. BALANÇA (PESAGEM) SCREEN -->
+        <div id="view-balanca" class="view-panel h-full overflow-y-auto p-8 hidden">
+            <div class="flex items-center justify-between pb-4 mb-6 border-b border-gray-800">
+                <div>
+                    <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-scale-balanced text-emerald-400"></i> 2. Balança Rodoviária & Pesagem
+                    </h2>
+                    <p class="text-xs text-gray-400 mt-1">Aferição de peso bruto, tara e volume líquido em conformidade com o recebimento de leite cru.</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-6xl">
+                <!-- Formulário de Pesagem -->
+                <div class="lg:col-span-2 bg-obsidianCard p-6 rounded-xl border border-gray-800 space-y-5">
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider">Selecione o Caminhão na Plataforma de Pesagem</label>
+                        <span class="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 font-mono flex items-center gap-1.5">
+                            <i class="fa-solid fa-stopwatch text-amber-400"></i> Tempo na Balança: <strong id="timer-balanca-live" class="text-amber-300">00:00</strong>
+                        </span>
+                    </div>
+                    <div>
+                        <select id="bal-caminhao" class="w-full bg-obsidian border border-gray-700 rounded-lg px-3 py-2.5 text-white focus:outline-none focus:border-emerald-400 transition text-sm" onchange="app.onBalTruckSelect()">
+                            <!-- Preenchido via JS -->
+                        </select>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-obsidian p-4 rounded-xl border border-gray-800 text-center">
+                        <div>
+                            <div class="text-xs text-gray-400">Peso Bruto Total</div>
+                            <div class="text-2xl font-bold text-white font-mono mt-1" id="bal-peso-bruto">-- kg</div>
+                        </div>
+                        <div>
+                            <div class="text-xs text-gray-400">Tara do Veículo</div>
+                            <div class="text-2xl font-bold text-gray-400 font-mono mt-1" id="bal-tara">-- kg</div>
+                        </div>
+                        <div>
+                            <div class="text-xs text-emerald-400 font-bold uppercase">Volume Líquido</div>
+                            <div class="text-2xl font-black text-emerald-400 font-mono mt-1" id="bal-volume-calc">0 L</div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs text-gray-400 mb-1">Volume Confirmado (Litros)</label>
+                            <input type="number" id="bal-volume-input" class="w-full bg-obsidian border border-gray-700 rounded-lg px-3 py-2 text-white font-mono text-sm" placeholder="Ex: 10000" oninput="app.onBalVolumeChange()">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-400 mb-1">Temperatura na Pesagem (°C)</label>
+                            <input type="number" step="0.1" id="bal-temp-input" class="w-full bg-obsidian border border-gray-700 rounded-lg px-3 py-2 text-white font-mono text-sm" placeholder="Ex: 3.8">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">Observações do Operador da Balança</label>
+                        <input type="text" id="bal-obs-input" class="w-full bg-obsidian border border-gray-700 rounded-lg px-3 py-2 text-white text-sm" placeholder="Ex: Lacre do tanque intacto, temperatura conforme padrão.">
+                    </div>
+
+                    <button onclick="app.registerWeighing()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3.5 px-4 rounded-xl transition shadow-lg flex items-center justify-center gap-2 text-sm">
+                        <i class="fa-solid fa-file-invoice"></i> Concluir Pesagem e Enviar ao Laboratório
+                    </button>
+                </div>
+
+                <!-- Relatório da IA da Balança -->
+                <div class="bg-obsidianCard p-6 rounded-xl border border-gray-800 flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-xs font-bold text-pijuAccent uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                            <i class="fa-solid fa-robot"></i> Validação Inteligente Piju
+                        </h3>
+                        <div id="bal-ai-box" class="bg-obsidian p-4 rounded-lg border border-gray-800 text-xs text-gray-300 space-y-2">
+                            <p>Selecione um caminhão para aferir os dados telemétricos de pesagem.</p>
+                        </div>
+                    </div>
+                    <div class="text-[11px] text-gray-500 mt-4 border-t border-gray-800 pt-3">
+                        <i class="fa-solid fa-lock text-emerald-400 mr-1"></i> Dados registrados no Segundo Cérebro com carimbo de tempo auditável.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. LABORATÓRIO (IA PIJU) SCREEN -->
+        <div id="view-laboratorio" class="view-panel h-full overflow-y-auto p-8 hidden">
+            <div class="flex items-center justify-between pb-4 mb-6 border-b border-gray-800">
+                <div>
+                    <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-flask text-pijuAccent"></i> 3. Laboratório de Qualidade • Análise Crítica
+                    </h2>
+                    <p class="text-xs text-gray-400 mt-1">Avaliação físico-química e microbiológica obrigatória antes da liberação para descarga.</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-6xl">
+                <!-- Formulário de Análise Técnica -->
+                <div class="bg-obsidianCard p-6 rounded-xl border border-gray-800 space-y-4">
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider">Carga Pesada Aguardando Laudo</label>
+                        <span class="text-xs px-2.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 font-mono flex items-center gap-1.5">
+                            <i class="fa-solid fa-stopwatch text-amber-400"></i> Tempo no Lab: <strong id="timer-lab-live" class="text-amber-300">00:00</strong>
+                        </span>
+                    </div>
+                    <div>
+                        <select id="lab-caminhao" class="w-full bg-obsidian border border-gray-700 rounded-lg px-3 py-2.5 text-white focus:outline-none focus:border-pijuAccent transition text-sm" onchange="app.onLabTruckSelect()">
+                            <!-- Preenchido via JS -->
+                        </select>
+                    </div>
+
+                    <!-- Ficha da Carga (Puxada da Balança) -->
+                    <div id="lab-truck-summary" class="bg-obsidian p-3 rounded-lg border border-gray-800 text-xs text-gray-300">
+                        Nenhum caminhão selecionado.
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs text-gray-400 mb-1">Acidez Dornic (14 a 18 ºD)</label>
+                            <input type="number" step="0.1" id="lab-acidez" class="w-full bg-obsidian border border-gray-700 rounded-lg px-3 py-2 text-white font-mono text-sm" placeholder="16.0">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-400 mb-1">pH (6.60 a 6.80)</label>
+                            <input type="number" step="0.01" id="lab-ph" class="w-full bg-obsidian border border-gray-700 rounded-lg px-3 py-2 text-white font-mono text-sm" placeholder="6.70">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs text-gray-400 mb-1">Teste do Alizarol 72%</label>
+                            <select id="lab-alizarol" class="w-full bg-obsidian border border-gray-700 rounded-lg px-3 py-2 text-white text-sm">
+                                <option value="Normal">Normal (Estável)</option>
+                                <option value="Instável">Instável (Coagulação)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-400 mb-1">Crioscopia (-0.512 a -0.536 °C)</label>
+                            <input type="text" id="lab-crio" class="w-full bg-obsidian border border-gray-700 rounded-lg px-3 py-2 text-white font-mono text-sm" placeholder="-0.530">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">Contagem Bacteriana Total (CBT)</label>
+                        <input type="text" id="lab-micro" class="w-full bg-obsidian border border-gray-700 rounded-lg px-3 py-2 text-white font-mono text-sm" placeholder="< 300.000 UFC/ml">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">Observações do Analista de Qualidade</label>
+                        <input type="text" id="lab-obs" class="w-full bg-obsidian border border-gray-700 rounded-lg px-3 py-2 text-white text-sm" placeholder="Ex: Análise sensorial adequada, sem odores anômalos.">
+                    </div>
+
+                    <button onclick="app.sendToPiju()" class="w-full bg-pijuAccent hover:bg-yellow-500 text-obsidianDark font-bold py-3 px-4 rounded-xl transition shadow-lg flex items-center justify-center gap-2 text-sm">
+                        <i class="fa-solid fa-robot"></i> Mandar ao PIJU para Análise
+                    </button>
+                </div>
+
+                <!-- Chat e Diagnóstico Piju IA -->
+                <div class="bg-obsidianCard p-6 rounded-xl border border-gray-800 flex flex-col">
+                    <h3 class="text-xs font-bold text-white uppercase tracking-wider mb-3 flex items-center justify-between">
+                        <span><i class="fa-solid fa-brain text-pijuAccent mr-1.5"></i> Parecer Analítico IA</span>
+                        <span class="text-[10px] text-gray-400">Piju v2.4</span>
+                    </h3>
+                    
+                    <div id="piju-chat" class="flex-1 overflow-y-auto space-y-3 custom-scrollbar bg-obsidian p-4 rounded-lg border border-gray-800 min-h-[220px]">
+                        <div class="text-sm text-gray-500 text-center italic py-8">
+                            Aguardando envio dos parâmetros físico-químicos para análise...
+                        </div>
+                    </div>
+
+                    <!-- Botões de Decisão Final do Analista -->
+                    <div id="auth-controls" class="mt-4 pt-4 border-t border-gray-800 hidden">
+                        <div class="text-xs text-gray-300 font-semibold mb-2">Decisão Exclusiva do Técnico Autorizado:</div>
+                        <div class="flex gap-3">
+                            <button onclick="app.authorizeTruck(true)" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-lg transition text-sm flex items-center justify-center gap-1.5">
+                                <i class="fa-solid fa-check"></i> Autorizar Carga
+                            </button>
+                            <button onclick="app.authorizeTruck(false)" class="flex-1 bg-red-600 hover:bg-red-500 text-white font-bold py-2.5 rounded-lg transition text-sm flex items-center justify-center gap-1.5">
+                                <i class="fa-solid fa-ban"></i> Recusar Carga (Descarte)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. PRODUÇÃO SCREEN -->
+        <div id="view-producao" class="view-panel h-full overflow-y-auto p-8 hidden">
+            <div class="flex items-center justify-between pb-4 mb-6 border-b border-gray-800">
+                <div>
+                    <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-gears text-purple-400"></i> 4. Produção, UHT & Envase Asséptico
+                    </h2>
+                    <p class="text-xs text-gray-400 mt-1">Genealogia completa do processamento do leite cru autorizado até o produto acabado.</p>
+                </div>
+            </div>
+
+            <div class="bg-obsidianCard p-6 rounded-xl border border-gray-800 max-w-3xl space-y-5">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Selecione o Lote Liberado pelo Laboratório</label>
+                    <select id="prod-caminhao" class="w-full bg-obsidian border border-gray-700 rounded-lg px-3 py-2.5 text-white focus:outline-none focus:border-purple-400 transition text-sm">
+                        <!-- Preenchido via JS -->
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Etapa Operacional a Registrar</label>
+                    <select id="prod-etapa" class="w-full bg-obsidian border border-gray-700 rounded-lg px-3 py-2.5 text-white focus:outline-none focus:border-purple-400 transition text-sm">
+                        <option value="Descarga de Plataforma (Filtração Primária)">1. Descarga na Plataforma (Filtração Primária & Conexões)</option>
+                        <option value="Silo de Leite Cru (Refrigeração 4ºC)">2. Silo de Leite Cru (Temp. 4°C, Agitação Constante)</option>
+                        <option value="Pasteurização & Padronização">3. Pasteurização & Padronização (75°C / 15s, Teor de Gordura)</option>
+                        <option value="Tratamento Térmico UHT">4. Tratamento UHT (142°C / 4s, Pressão Diferencial)</option>
+                        <option value="Tanque Asséptico & Envase">5. Tanque Asséptico & Envase em Máquinas UHT (Filtros HEPA)</option>
+                        <option value="Produto Pronto para Distribuição">6. Produto Pronto para Distribuição (Quarentena & Expedição)</option>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">Identificador de Silo / Linha</label>
+                        <input type="text" id="prod-linha" class="w-full bg-obsidian border border-gray-700 rounded-lg px-3 py-2 text-white font-mono text-sm" placeholder="Ex: LINHA-UHT-01">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">Temperatura / Pressão Medida</label>
+                        <input type="text" id="prod-temp" class="w-full bg-obsidian border border-gray-700 rounded-lg px-3 py-2 text-white font-mono text-sm" placeholder="Ex: 142°C / 4.2 bar">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Observações do Operador de Chão de Fábrica</label>
+                    <input type="text" id="prod-obs" class="w-full bg-obsidian border border-gray-700 rounded-lg px-3 py-2 text-white text-sm" placeholder="Ex: Válvula de desvio testada e aprovada, lote de embalagens esterilizado com H2O2.">
+                </div>
+
+                <button onclick="app.registerProductionStep()" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-3.5 px-4 rounded-xl transition shadow-lg flex items-center justify-center gap-2 text-sm">
+                    <i class="fa-solid fa-cube"></i> Gravar Etapa no Segundo Cérebro (Hash Imutável)
+                </button>
+            </div>
+        </div>
+
+        <!-- 5. EXPEDIÇÃO & SAÍDA SCREEN -->
+        <div id="view-expedicao" class="view-panel h-full overflow-y-auto p-8 hidden">
+            <div class="flex items-center justify-between pb-4 mb-6 border-b border-gray-800">
+                <div>
+                    <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-dolly text-sky-400"></i> 5. Expedição & Saída de Veículos
+                    </h2>
+                    <p class="text-xs text-gray-400 mt-1">Câmera OCR de saída de fábrica, emissão do lacre de expedição e bloqueio final da rastreabilidade.</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-6xl">
+                <div class="lg:col-span-2 bg-obsidianCard p-6 rounded-xl border border-gray-800 space-y-5">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Selecione o Caminhão na Portaria de Saída</label>
+                        <select id="exp-caminhao" class="w-full bg-obsidian border border-gray-700 rounded-lg px-3 py-2.5 text-white focus:outline-none focus:border-sky-400 transition text-sm" onchange="app.onExpTruckSelect()">
+                            <!-- Preenchido via JS -->
+                        </select>
+                    </div>
+
+                    <!-- Ficha da Carga na Saída -->
+                    <div id="exp-truck-summary" class="bg-obsidian p-4 rounded-xl border border-gray-800 text-xs text-gray-300 space-y-2">
+                        Nenhum caminhão selecionado para saída.
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs text-gray-400 mb-1">Número do Lacre de Saída (Caixas UHT)</label>
+                            <input type="text" id="exp-lacre" class="w-full bg-obsidian border border-gray-700 rounded-lg px-3 py-2 text-white font-mono text-sm" placeholder="Ex: LACRE-EXP-001">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-400 mb-1">Destino da Distribuição</label>
+                            <input type="text" id="exp-destino" class="w-full bg-obsidian border border-gray-700 rounded-lg px-3 py-2 text-white text-sm" placeholder="Ex: Centro de Distribuição São Paulo (CD-SP)">
+                        </div>
+                    </div>
+
+                    <div class="bg-amber-500/10 border border-amber-500/20 p-3.5 rounded-lg text-xs text-amber-300 leading-relaxed">
+                        <i class="fa-solid fa-lock text-pijuAccent mr-1.5"></i>
+                        <strong>IMPORTANTE (IMUTABILIDADE):</strong> Ao registrar a saída, a câmera de saída valida o caminhão e o sistema <strong>tranca o lote em definitivo</strong>. Nenhuma categoria ou operador poderá alterar mais os dados deste veículo.
+                    </div>
+
+                    <button onclick="app.registerTruckExit()" class="w-full bg-sky-600 hover:bg-sky-500 text-white font-bold py-3.5 px-4 rounded-xl transition shadow-lg flex items-center justify-center gap-2 text-sm">
+                        <i class="fa-solid fa-lock"></i> Registrar Saída & Fechar Carga (Trancar Rastreabilidade)
+                    </button>
+                </div>
+
+                <!-- Câmera OCR Saída -->
+                <div class="bg-obsidianCard p-6 rounded-xl border border-gray-800 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-xs font-bold text-sky-400 uppercase tracking-wider flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full bg-sky-400 animate-pulse"></span> Câmera OCR Saída 02
+                            </span>
+                            <span class="text-[10px] text-gray-500 font-mono">PORTARIA SAÍDA</span>
+                        </div>
+                        <div class="h-44 rounded-xl overflow-hidden mb-3 border border-gray-700">
+                            <img src="assets/expedicao_banner.jpg" alt="Câmera Saída" class="w-full h-full object-cover">
+                        </div>
+                        <div class="text-xs text-gray-300 font-mono space-y-1">
+                            <div>• Cancela Automática: <span class="text-emerald-400 font-bold">Armada</span></div>
+                            <div>• Leitor de Lacre RFID: <span class="text-emerald-400 font-bold">Conectado</span></div>
+                            <div>• Quarentena UHT: <span class="text-emerald-400 font-bold">Liberada</span></div>
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-gray-800 text-[11px] text-gray-500">
+                        <i class="fa-solid fa-shield-check text-sky-400 mr-1"></i> Garantia de Genealogia de Produto Piracanjuba.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 6. SECOND BRAIN SCREEN (Graph View - Obsidian Style) -->
+        <div id="view-second-brain" class="view-panel h-full hidden relative overflow-hidden bg-obsidian">
+            <!-- Floating Control Panel -->
+            <div class="absolute top-4 left-4 z-10 bg-obsidianDark/90 backdrop-blur-md p-4 rounded-xl border border-gray-800 shadow-2xl w-72">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+                        <i class="fa-solid fa-circle-nodes text-pijuAccent"></i> Segundo Cérebro (Grafo)
+                    </h3>
+                    <button onclick="app.resetGraphView()" class="text-[11px] text-gray-400 hover:text-white px-2 py-0.5 rounded bg-gray-800" title="Centralizar Grafo">
+                        <i class="fa-solid fa-crosshairs"></i> Reset
+                    </button>
+                </div>
+                
+                <p class="text-[11px] text-gray-400 mb-3">Rede de rastreabilidade imutável inspirada no Obsidian.</p>
+
+                <!-- Legenda de Cores -->
+                <div class="grid grid-cols-2 gap-1.5 text-[11px] mb-3">
+                    <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-gray-400"></span> Data / Dia</div>
+                    <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-sky-400"></span> Caminhão</div>
+                    <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span> Balança</div>
+                    <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span> Laboratório</div>
+                    <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-purple-400"></span> Produção</div>
+                    <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span> Recusado</div>
+                </div>
+                
+                <!-- Controles de Configuração de Tamanho e Distância -->
+                <div class="border-t border-gray-800 pt-2.5 space-y-2">
+                    <div>
+                        <div class="flex justify-between text-[11px] text-gray-400">
+                            <span>Tamanho dos Dots</span>
+                            <span id="lbl-node-size" class="font-mono text-white">6</span>
+                        </div>
+                        <input type="range" id="cfg-node-size" min="3" max="15" value="6" class="w-full accent-pijuAccent h-1 bg-gray-700 rounded-lg" oninput="app.updateGraphConfig()">
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-[11px] text-gray-400">
+                            <span>Distância dos Links</span>
+                            <span id="lbl-link-dist" class="font-mono text-white">50</span>
+                        </div>
+                        <input type="range" id="cfg-link-dist" min="20" max="120" value="50" class="w-full accent-pijuAccent h-1 bg-gray-700 rounded-lg" oninput="app.updateGraphConfig()">
+                    </div>
+                </div>
+            </div>
+
+            <!-- The Force Graph Canvas Container -->
+            <div id="graph-container" class="w-full h-full cursor-grab"></div>
+
+            <!-- Empty Graph Overlay -->
+            <div id="graph-empty-overlay" class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-gray-500 z-10 hidden">
+                <i class="fa-solid fa-circle-nodes text-5xl mb-3 text-gray-700"></i>
+                <div class="text-sm font-semibold text-gray-300">Segundo Cérebro Zerado</div>
+                <div class="text-xs text-gray-500 mt-1">Nenhum nó registrado. Cadastre a entrada de um caminhão na <strong>Portaria</strong>.</div>
+            </div>
+
+            <!-- Slide-out Drawer for Node Details -->
+            <div id="node-details" class="absolute top-0 right-0 h-full w-96 bg-obsidianDark/95 backdrop-blur-md border-l border-gray-800 p-6 transform translate-x-full transition-transform duration-300 z-20 overflow-y-auto custom-scrollbar">
+                <div class="flex justify-between items-center mb-6 pb-3 border-b border-gray-800">
+                    <h2 class="text-base font-bold text-white flex items-center gap-2" id="nd-title">
+                        Detalhes do Nó
+                    </h2>
+                    <button onclick="app.closeNodeDetails()" class="text-gray-400 hover:text-white p-1">
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+                <div id="nd-content" class="text-xs text-gray-300 space-y-4">
+                    <!-- Dynamic details injected via JS -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- TOAST NOTIFICATION CONTAINER -->
+    <div id="toast-container" class="fixed top-5 right-5 z-[9999] flex flex-col gap-2.5 pointer-events-none max-w-sm w-full"></div>
+
+    <!-- IN-APP CONFIRMATION MODAL (RESET DATABASE) -->
+    <div id="modal-confirm-reset" class="fixed inset-0 z-[9998] bg-black/80 backdrop-blur-sm flex items-center justify-center hidden p-4">
+        <div class="bg-obsidianCard border border-red-800/60 rounded-2xl p-6 max-w-md w-full shadow-2xl text-center">
+            <div class="w-14 h-14 rounded-full bg-red-500/20 text-red-400 mx-auto flex items-center justify-center text-2xl mb-4">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <h3 class="text-lg font-bold text-white mb-2">Resetar Banco de Dados?</h3>
+            <p class="text-xs text-gray-400 mb-6 leading-relaxed">
+                Esta ação apagará todos os dados locais salvos no navegador e restaurará o Segundo Cérebro para o estado 100% zerado e limpo (0 nós, 0 caminhões, 0 litros).
+            </p>
+            <div class="flex gap-3">
+                <button onclick="app.closeResetModal()" class="flex-1 bg-gray-800 hover:bg-gray-700 text-gray-300 font-bold py-2.5 px-4 rounded-xl text-xs transition">
+                    Cancelar
+                </button>
+                <button onclick="app.confirmResetData()" class="flex-1 bg-red-600 hover:bg-red-500 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition shadow-lg">
+                    Confirmar Reset Total
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Scripts -->
+    <script src="js/piju_assets.js"></script>
+    <script src="js/piju_pet.js"></script>
+    <script src="js/graph.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
