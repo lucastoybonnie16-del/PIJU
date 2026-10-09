@@ -67,14 +67,15 @@
         </div>
         <div class="flex items-center gap-2">
             <span id="mobile-current-role-badge" class="text-[9px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-mono font-bold uppercase truncate max-w-[120px]">GESTOR</span>
-            <button onclick="app.logout()" class="w-8 h-8 rounded-lg bg-red-950/40 border border-red-800/40 text-red-400 flex items-center justify-center text-xs hover:bg-red-900/60 transition" title="Sair do Sistema">
+            <button onclick="app.logout()" class="px-2.5 h-8 rounded-lg bg-red-950/40 border border-red-800/40 text-red-400 flex items-center gap-1.5 text-xs hover:bg-red-900/60 active:scale-95 transition cursor-pointer" title="Sair do Sistema / Trocar Operador">
                 <i class="fa-solid fa-right-from-bracket"></i>
+                <span class="text-[10px] font-bold">Sair</span>
             </button>
         </div>
     </header>
 
     <!-- LOGIN SCREEN -->
-    <div id="login-screen" class="absolute inset-0 z-50 flex items-center justify-center bg-obsidianDark transition-opacity duration-300 p-4">
+    <div id="login-screen" class="fixed inset-0 z-[100] flex items-center justify-center bg-obsidianDark transition-opacity duration-300 p-4">
         <div class="bg-obsidianLight p-6 sm:p-8 rounded-2xl shadow-2xl w-full max-w-md border border-gray-800 max-h-[95vh] overflow-y-auto">
             <div class="text-center mb-6">
                 <div class="inline-flex p-3 rounded-2xl bg-amber-500/10 text-pijuAccent text-3xl mb-3">
@@ -83,10 +84,10 @@
                 <h1 class="text-2xl font-bold text-white tracking-wide">PIJU OS • PIRACANJUBA</h1>
                 <p class="text-xs text-gray-400 mt-1">Rastreabilidade Imutável • 2M Litros / Dia</p>
             </div>
-            <div class="space-y-4">
+            <form onsubmit="event.preventDefault(); app.login();" class="space-y-4">
                 <div>
                     <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Perfil / Setor Operacional</label>
-                    <select id="login-role" class="w-full bg-obsidian border border-gray-700 rounded-lg px-3 py-2.5 text-white focus:outline-none focus:border-pijuAccent transition text-sm">
+                    <select id="login-role" onchange="app.onLoginRoleChange()" class="w-full bg-obsidian border border-gray-700 rounded-lg px-3 py-2.5 text-white focus:outline-none focus:border-pijuAccent transition text-sm cursor-pointer">
                         <option value="gestor">👑 Gestor Geral (Painel BI & Controle Total)</option>
                         <option value="portaria">🚚 1. Portaria & Recepção de Cargas</option>
                         <option value="balanca">⚖️ 2. Balança & Pesagem Oficial</option>
@@ -97,12 +98,12 @@
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Matrícula SAP / Operador</label>
-                    <input type="text" id="login-user" class="w-full bg-obsidian border border-gray-700 rounded-lg px-3 py-2.5 text-white focus:outline-none focus:border-pijuAccent transition text-sm" value="GESTOR-PIRACANJUBA">
+                    <input type="text" id="login-user" onkeydown="if(event.key === 'Enter'){ event.preventDefault(); app.login(); }" class="w-full bg-obsidian border border-gray-700 rounded-lg px-3 py-2.5 text-white focus:outline-none focus:border-pijuAccent transition text-sm" value="GESTOR-PIRACANJUBA" placeholder="Digite seu nome ou identificação">
                 </div>
-                <button onclick="app.login()" class="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-obsidianDark font-bold py-3 px-4 rounded-lg transition shadow-lg mt-4 flex items-center justify-center gap-2">
+                <button type="submit" class="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-obsidianDark font-bold py-3 px-4 rounded-lg transition shadow-lg mt-4 flex items-center justify-center gap-2 cursor-pointer active:scale-98">
                     <i class="fa-solid fa-right-to-bracket"></i> Acessar Sistema
                 </button>
-            </div>
+            </form>
             <div class="mt-6 text-center text-[11px] text-gray-500">
                 PIRACANJUBA • Grand Prix SENAI de Inovação
             </div>
@@ -147,13 +148,14 @@
             </div>
         </div>
 
-        <div class="p-3 border-t border-gray-800 text-xs text-gray-400 flex justify-between items-center bg-obsidian">
-            <div class="truncate">
-                <i class="fa-solid fa-user-circle mr-1 text-gray-400"></i>
-                <span class="text-white font-medium" id="current-user-display"></span>
+        <div class="p-3 border-t border-gray-800 text-xs text-gray-400 flex justify-between items-center bg-obsidian gap-2">
+            <div class="truncate flex-1 min-w-0">
+                <i class="fa-solid fa-user-circle mr-1 text-pijuAccent"></i>
+                <span class="text-white font-medium truncate" id="current-user-display"></span>
             </div>
-            <button onclick="app.logout()" class="hover:text-red-400 text-gray-400 transition p-1" title="Sair do Sistema">
-                <i class="fa-solid fa-right-from-bracket"></i>
+            <button onclick="app.logout()" class="hover:text-red-400 text-gray-300 transition p-1.5 flex items-center gap-1.5 text-xs bg-gray-800/80 hover:bg-red-950/60 px-2.5 py-1 rounded-lg border border-gray-700/60 hover:border-red-800/60 shrink-0 cursor-pointer active:scale-95" title="Sair do Sistema / Trocar Operador">
+                <i class="fa-solid fa-right-from-bracket text-red-400"></i>
+                <span class="text-[11px] font-semibold">Sair</span>
             </button>
         </div>
     </nav>

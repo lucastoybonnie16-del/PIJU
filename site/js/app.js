@@ -63,6 +63,8 @@ window.app = {
         this.initTimers();
         if (this.state.user) {
             this.showMainLayout();
+        } else {
+            this.showLoginScreen();
         }
 
         // Verifica se veio de um reset total
@@ -76,20 +78,31 @@ window.app = {
 
     // --- State Persistence & Sanitation ---
     loadState() {
-        // Purge preventivo para garantir que qualquer dado residual antigo do navegador seja zerado
-        const PURGE_FLAG = 'piju_db_purged_v5';
+        // Purge preventivo para desvincular login preso em versões antigas e permitir logon livre
+        const PURGE_FLAG = 'piju_auth_fix_v6';
         if (!localStorage.getItem(PURGE_FLAG)) {
-            const savedUser = localStorage.getItem('piju_current_user') || 'GESTOR-PIRACANJUBA';
-            const savedRole = localStorage.getItem('piju_current_role') || 'gestor';
-            localStorage.clear();
+            localStorage.removeItem('piju_current_user');
+            localStorage.removeItem('piju_current_role');
             localStorage.setItem(PURGE_FLAG, 'true');
-            localStorage.setItem('piju_current_user', savedUser);
-            localStorage.setItem('piju_current_role', savedRole);
-            this.state.user = savedUser;
-            this.state.role = savedRole;
-            this.state.nodes = [];
-            this.state.links = [];
-            this.state.closedTruckIds = [];
+
+            let existingNodes = [];
+            let existingLinks = [];
+            let existingClosed = [];
+            try {
+                const prev = localStorage.getItem('piju_db_v5');
+                if (prev) {
+                    const parsedPrev = JSON.parse(prev);
+                    existingNodes = parsedPrev.nodes || [];
+                    existingLinks = parsedPrev.links || [];
+                    existingClosed = parsedPrev.closedTruckIds || [];
+                }
+            } catch (err) {}
+
+            this.state.user = null;
+            this.state.role = null;
+            this.state.nodes = existingNodes;
+            this.state.links = existingLinks;
+            this.state.closedTruckIds = existingClosed;
             this.saveState();
             return;
         }
@@ -98,8 +111,8 @@ window.app = {
             const raw = localStorage.getItem('piju_db_v5');
             if (raw) {
                 const parsed = JSON.parse(raw);
-                this.state.user = parsed.user || localStorage.getItem('piju_current_user') || 'GESTOR-PIRACANJUBA';
-                this.state.role = parsed.role || localStorage.getItem('piju_current_role') || 'gestor';
+                this.state.user = parsed.user || localStorage.getItem('piju_current_user') || null;
+                this.state.role = parsed.role || localStorage.getItem('piju_current_role') || null;
                 this.state.nodes = parsed.nodes || [];
                 this.state.closedTruckIds = parsed.closedTruckIds || [];
                 // Sanitize links to guarantee source and target are strings
@@ -124,15 +137,23 @@ window.app = {
         }));
 
         const toSave = {
-            user: this.state.user,
-            role: this.state.role,
+            user: this.state.user || null,
+            role: this.state.role || null,
             nodes: this.state.nodes,
             links: cleanLinks,
             closedTruckIds: this.state.closedTruckIds || []
         };
         localStorage.setItem('piju_db_v5', JSON.stringify(toSave));
-        if (this.state.user) localStorage.setItem('piju_current_user', this.state.user);
-        if (this.state.role) localStorage.setItem('piju_current_role', this.state.role);
+        if (this.state.user) {
+            localStorage.setItem('piju_current_user', this.state.user);
+        } else {
+            localStorage.removeItem('piju_current_user');
+        }
+        if (this.state.role) {
+            localStorage.setItem('piju_current_role', this.state.role);
+        } else {
+            localStorage.removeItem('piju_current_role');
+        }
         this.renderFolders();
         this.updateStats();
         this.updateLivePlacasTable();
@@ -236,36 +257,108 @@ window.app = {
         return '0x' + Math.abs(hash).toString(16).padStart(8, '0') + timePart + 'a7f9';
     },
 
-    // --- Authentication ---
+    // --- Authentication & User Lifecycle ---
+    onLoginRoleChange() {
+        const roleSelect = document.getElementById('login-role');
+        const userInput = document.getElementById('login-user');
+        if (!roleSelect || !userInput) return;
+        const role = roleSelect.value;
+        const defaults = {
+            'gestor': 'GESTOR-PIRACANJUBA',
+            'portaria': 'OPERADOR-PORTARIA',
+            'balanca': 'OPERADOR-BALANCA',
+            'laboratorio': 'ANALISTA-LAB-IA',
+            'producao': 'OPERADOR-PRODUCAO',
+            'expedicao': 'FISCAL-EXPEDICAO'
+        };
+        userInput.value = defaults[role] || 'OPERADOR';
+    },
+
     login() {
-        const user = document.getElementById('login-user').value.trim();
-        const role = document.getElementById('login-role').value;
-        if (user) {
-            this.state.user = user;
-            this.state.role = role;
-            this.saveState();
-            this.showMainLayout();
+        const roleSelect = document.getElementById('login-role');
+        const userInput = document.getElementById('login-user');
+        const role = roleSelect ? roleSelect.value : 'gestor';
+        let user = userInput ? userInput.value.trim() : '';
+
+        const defaults = {
+            'gestor': 'GESTOR-PIRACANJUBA',
+            'portaria': 'OPERADOR-PORTARIA',
+            'balanca': 'OPERADOR-BALANCA',
+            'laboratorio': 'ANALISTA-LAB-IA',
+            'producao': 'OPERADOR-PRODUCAO',
+            'expedicao': 'FISCAL-EXPEDICAO'
+        };
+
+        if (!user) {
+            user = defaults[role] || 'OPERADOR';
+            if (userInput) userInput.value = user;
         }
+
+        this.state.user = user;
+        this.state.role = role;
+        this.saveState();
+        this.showMainLayout();
+        this.showToast(`✅ Acesso autorizado: ${user} [${this.getRoleLabel(role)}]`, 'success');
     },
 
     logout() {
-        if (window.pijuPet) window.pijuPet.hide();
+        if (window.pijuPet && typeof window.pijuPet.hide === 'function') {
+            window.pijuPet.hide();
+        }
         const mobileTopbar = document.getElementById('mobile-topbar');
         const mobileBottomNav = document.getElementById('mobile-bottom-nav');
         if (mobileTopbar) mobileTopbar.classList.add('hidden');
         if (mobileBottomNav) mobileBottomNav.classList.add('hidden');
+        const backdrop = document.getElementById('sidebar-backdrop');
+        if (backdrop) backdrop.classList.add('hidden');
+
         this.state.user = null;
         this.state.role = null;
+        localStorage.removeItem('piju_current_user');
+        localStorage.removeItem('piju_current_role');
         this.saveState();
-        location.reload();
+        this.showLoginScreen();
+        this.showToast('ℹ️ Sessão encerrada. Faça logon para continuar.', 'info');
+    },
+
+    showLoginScreen() {
+        const loginScreen = document.getElementById('login-screen');
+        if (loginScreen) {
+            loginScreen.classList.remove('hidden');
+            loginScreen.style.display = 'flex';
+        }
+        const sidebar = document.getElementById('sidebar');
+        if (sidebar) sidebar.classList.add('hidden');
+        const mainContent = document.getElementById('main-content');
+        if (mainContent) mainContent.classList.add('hidden');
+        const mobileTopbar = document.getElementById('mobile-topbar');
+        if (mobileTopbar) mobileTopbar.classList.add('hidden');
+        const mobileBottomNav = document.getElementById('mobile-bottom-nav');
+        if (mobileBottomNav) mobileBottomNav.classList.add('hidden');
+        const backdrop = document.getElementById('sidebar-backdrop');
+        if (backdrop) backdrop.classList.add('hidden');
+        if (window.pijuPet && typeof window.pijuPet.hide === 'function') {
+            window.pijuPet.hide();
+        }
+        this.onLoginRoleChange();
     },
 
     // --- Layout & Role-Based Navigation ---
     showMainLayout() {
-        document.getElementById('login-screen').classList.add('hidden');
-        document.getElementById('sidebar').classList.remove('hidden');
-        document.getElementById('main-content').classList.remove('hidden');
-        document.getElementById('current-user-display').textContent = `${this.state.user} (${this.getRoleLabel(this.state.role)})`;
+        const loginScreen = document.getElementById('login-screen');
+        if (loginScreen) {
+            loginScreen.classList.add('hidden');
+            loginScreen.style.display = 'none';
+        }
+        const sidebar = document.getElementById('sidebar');
+        if (sidebar) sidebar.classList.remove('hidden');
+        const mainContent = document.getElementById('main-content');
+        if (mainContent) mainContent.classList.remove('hidden');
+        
+        const curUserDisplay = document.getElementById('current-user-display');
+        if (curUserDisplay) {
+            curUserDisplay.textContent = `${this.state.user} (${this.getRoleLabel(this.state.role)})`;
+        }
         
         // Exibe controles mobile se estiver em smartphone/Android (gerenciado via CSS)
         const mobileTopbar = document.getElementById('mobile-topbar');
@@ -281,7 +374,7 @@ window.app = {
         }
 
         // Exibe o pet 3D Pijuzinho para todos os funcionários logados
-        if (window.pijuPet) {
+        if (window.pijuPet && typeof window.pijuPet.show === 'function') {
             window.pijuPet.show();
         }
 
