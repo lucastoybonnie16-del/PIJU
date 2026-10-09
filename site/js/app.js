@@ -250,6 +250,10 @@ window.app = {
 
     logout() {
         if (window.pijuPet) window.pijuPet.hide();
+        const mobileTopbar = document.getElementById('mobile-topbar');
+        const mobileBottomNav = document.getElementById('mobile-bottom-nav');
+        if (mobileTopbar) mobileTopbar.classList.add('hidden');
+        if (mobileBottomNav) mobileBottomNav.classList.add('hidden');
         this.state.user = null;
         this.state.role = null;
         this.saveState();
@@ -263,6 +267,21 @@ window.app = {
         document.getElementById('main-content').classList.remove('hidden');
         document.getElementById('current-user-display').textContent = `${this.state.user} (${this.getRoleLabel(this.state.role)})`;
         
+        // Exibe controles mobile se estiver em smartphone/Android
+        const mobileTopbar = document.getElementById('mobile-topbar');
+        const mobileBottomNav = document.getElementById('mobile-bottom-nav');
+        if (mobileTopbar) {
+            mobileTopbar.classList.remove('hidden');
+            mobileTopbar.classList.add('flex');
+            const badge = document.getElementById('mobile-current-role-badge');
+            if (badge) badge.textContent = this.getRoleLabel(this.state.role).toUpperCase();
+        }
+        if (mobileBottomNav) {
+            mobileBottomNav.classList.remove('hidden');
+            mobileBottomNav.classList.add('flex');
+            this.updateMobileStationButton();
+        }
+
         // Exibe o pet 3D Pijuzinho para todos os funcionários logados
         if (window.pijuPet) {
             window.pijuPet.show();
@@ -411,6 +430,10 @@ window.app = {
             }
         });
 
+        // Fecha drawer mobile automaticamente ao navegar
+        this.closeMobileSidebar();
+        this.updateMobileNavActive(viewId);
+
         // Lifecycle calls for view data setup
         if (viewId === 'portaria') this.simulateCamera();
         if (viewId === 'balanca') this.updateBalDropdown();
@@ -427,6 +450,86 @@ window.app = {
                 window.pijuGraph.init();
                 window.pijuGraph.resize();
             }, 50);
+        }
+    },
+
+    // --- Mobile Navigation & Android Handlers ---
+    toggleMobileSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const backdrop = document.getElementById('sidebar-backdrop');
+        if (!sidebar) return;
+        const isClosed = sidebar.classList.contains('-translate-x-full');
+        if (isClosed) {
+            sidebar.classList.remove('-translate-x-full');
+            sidebar.classList.add('translate-x-0');
+            if (backdrop) backdrop.classList.remove('hidden');
+        } else {
+            sidebar.classList.add('-translate-x-full');
+            sidebar.classList.remove('translate-x-0');
+            if (backdrop) backdrop.classList.add('hidden');
+        }
+    },
+
+    closeMobileSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const backdrop = document.getElementById('sidebar-backdrop');
+        if (sidebar) {
+            sidebar.classList.add('-translate-x-full');
+            sidebar.classList.remove('translate-x-0');
+        }
+        if (backdrop) backdrop.classList.add('hidden');
+    },
+
+    updateMobileNavActive(viewId) {
+        document.querySelectorAll('.mobile-nav-btn').forEach(btn => {
+            const v = btn.getAttribute('data-view');
+            if (v === viewId || (v === 'station' && viewId === this.state.role)) {
+                btn.classList.add('active', 'text-amber-400');
+                btn.classList.remove('text-gray-400');
+            } else {
+                btn.classList.remove('active', 'text-amber-400');
+                btn.classList.add('text-gray-400');
+            }
+        });
+    },
+
+    updateMobileStationButton() {
+        const icon = document.getElementById('mobile-quick-station-icon');
+        const label = document.getElementById('mobile-quick-station-label');
+        if (!icon || !label) return;
+
+        const role = this.state.role || 'gestor';
+        const roleData = {
+            'portaria': { icon: 'fa-solid fa-truck text-blue-400', label: 'Portaria' },
+            'balanca': { icon: 'fa-solid fa-scale-balanced text-emerald-400', label: 'Balança' },
+            'laboratorio': { icon: 'fa-solid fa-flask text-amber-400', label: 'Lab IA' },
+            'producao': { icon: 'fa-solid fa-gears text-purple-400', label: 'Produção' },
+            'expedicao': { icon: 'fa-solid fa-dolly text-sky-400', label: 'Expedição' },
+            'gestor': { icon: 'fa-solid fa-chart-line text-amber-400', label: 'Gestão' }
+        };
+
+        const config = roleData[role] || roleData.gestor;
+        icon.className = `${config.icon} text-base`;
+        label.textContent = config.label;
+    },
+
+    goToMyStation() {
+        const role = this.state.role;
+        if (role && role !== 'gestor') {
+            this.navigate(role);
+        } else {
+            this.navigate('home');
+        }
+    },
+
+    toggleGraphPanel() {
+        const panel = document.getElementById('graph-controls-panel');
+        const btn = document.getElementById('btn-toggle-graph-panel');
+        if (!panel) return;
+        panel.classList.toggle('collapsed');
+        if (btn) {
+            const isCol = panel.classList.contains('collapsed');
+            btn.innerHTML = isCol ? '<i class="fa-solid fa-chevron-down"></i>' : '<i class="fa-solid fa-chevron-up"></i>';
         }
     },
 

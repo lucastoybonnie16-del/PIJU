@@ -128,9 +128,10 @@ window.pijuPet = {
 
         document.body.appendChild(this.container);
 
-        // Initial screen coords
-        this.posX = Math.min(window.innerWidth - 190, Math.max(60, window.innerWidth - 300));
-        this.posY = 20;
+        // Initial screen coords (com folga para barra de navegação no mobile)
+        const isMobile = window.innerWidth < 640;
+        this.posX = Math.min(window.innerWidth - (isMobile ? 145 : 190), Math.max(20, window.innerWidth - 200));
+        this.posY = isMobile ? 65 : 20;
         this.targetX = this.posX;
         this.clampPosition();
         this.updatePosition();
@@ -425,12 +426,13 @@ window.pijuPet = {
     },
 
     clampPosition() {
-        const minX = 40;
-        const maxX = Math.max(minX, window.innerWidth - 180);
+        const isMobile = window.innerWidth < 640;
+        const minX = 15;
+        const maxX = Math.max(minX, window.innerWidth - (isMobile ? 145 : 180));
         this.posX = Math.max(minX, Math.min(maxX, this.posX));
 
-        const minY = 10;
-        const maxY = Math.max(minY, window.innerHeight - 200);
+        const minY = isMobile ? 60 : 10;
+        const maxY = Math.max(minY, window.innerHeight - (isMobile ? 180 : 200));
         this.posY = Math.max(minY, Math.min(maxY, this.posY));
     },
 

@@ -44,3 +44,45 @@ body {
 .toast-item {
     animation: toastIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+
+/* ========================================================
+   MOBILE & ANDROID PWA RESPONSIVENESS
+   ======================================================== */
+:root {
+    --sat: env(safe-area-inset-top, 0px);
+    --sab: env(safe-area-inset-bottom, 0px);
+}
+
+html, body {
+    overscroll-behavior-y: none;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+/* Touch target sizing */
+button, select, input, a {
+    touch-action: manipulation;
+}
+
+/* Active bottom navigation highlight */
+.mobile-nav-btn.active {
+    color: #f59e0b !important;
+}
+.mobile-nav-btn.active i {
+    transform: scale(1.15);
+    color: #f59e0b !important;
+}
+
+/* Mobile smooth drawer transition */
+#sidebar {
+    transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Mobile adjustments for Pijuzinho on small screens */
+@media (max-width: 640px) {
+    #pijuzinho-pet-container {
+        transform: scale(0.88);
+        transform-origin: bottom right;
+    }
+}
+
